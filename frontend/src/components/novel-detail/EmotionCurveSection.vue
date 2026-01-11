@@ -275,12 +275,15 @@ const fetchEmotionData = async (useAI = false) => {
     }
     
     const data: EmotionCurveResponse = await response.json()
+    console.log('[fetchEmotionData] API返回数据:', data)
     emotionPoints.value = data.emotion_points || []
     totalChapters.value = data.total_chapters
     averageIntensity.value = data.average_intensity
     emotionDistribution.value = data.emotion_distribution || {}
+    console.log('[fetchEmotionData] emotionPoints数量:', emotionPoints.value.length)
     
     await nextTick()
+    console.log('[fetchEmotionData] nextTick后，准备初始化图表')
     initChart()
   } catch (e: any) {
     console.error('情感曲线加载错误:', e)
@@ -305,11 +308,27 @@ const useAIAnalysis = () => {
 }
 
 const initChart = async () => {
-  if (!chartCanvas.value || emotionPoints.value.length === 0) return
+  console.log('[initChart] 开始初始化图表')
+  console.log('[initChart] chartCanvas.value:', chartCanvas.value)
+  console.log('[initChart] emotionPoints.value.length:', emotionPoints.value.length)
   
-  // Dynamically import Chart.js
-  const { Chart, registerables } = await import('chart.js')
-  Chart.register(...registerables)
+  if (!chartCanvas.value) {
+    console.error('[initChart] canvas元素不存在')
+    return
+  }
+  
+  if (emotionPoints.value.length === 0) {
+    console.warn('[initChart] 没有情感数据点')
+    return
+  }
+  
+  try {
+    // Dynamically import Chart.js
+    console.log('[initChart] 开始动态导入Chart.js')
+    const { Chart, registerables } = await import('chart.js')
+    console.log('[initChart] Chart.js导入成功')
+    Chart.register(...registerables)
+    console.log('[initChart] Chart.js注册完成')
   
   if (chartInstance) {
     chartInstance.destroy()
@@ -395,6 +414,11 @@ const initChart = async () => {
       }
     }
   })
+  
+  console.log('[initChart] 图表创建成功')
+  } catch (error) {
+    console.error('[initChart] 图表初始化失败:', error)
+  }
 }
 
 const updateChart = () => {
