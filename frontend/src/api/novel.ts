@@ -141,7 +141,14 @@ export interface DeleteNovelsResponse {
   message: string
 }
 
-export type NovelSectionType = 'overview' | 'world_setting' | 'characters' | 'relationships' | 'chapter_outline' | 'chapters' | 'emotion_curve' | 'foreshadowing'
+// 内容型Section（对应后端NovelSectionType枚举）
+export type NovelSectionType = 'overview' | 'world_setting' | 'characters' | 'relationships' | 'chapter_outline' | 'chapters'
+
+// 分析型Section（不属于NovelSectionType，使用独立的analytics API）
+export type AnalysisSectionType = 'emotion_curve' | 'foreshadowing'
+
+// 所有Section的联合类型
+export type AllSectionType = NovelSectionType | AnalysisSectionType
 
 export interface NovelSectionResponse {
   section: NovelSectionType

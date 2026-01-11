@@ -254,7 +254,20 @@ const fetchEmotionData = async (useAI = false) => {
       let errorMessage = '获取情感数据失败'
       try {
         const errorData = await response.json()
-        errorMessage = errorData.detail || errorData.message || JSON.stringify(errorData)
+        // 处琅22错误（参数校验失败）
+        if (response.status === 422 && errorData.detail) {
+          if (Array.isArray(errorData.detail)) {
+            // FastAPI验证错误格式
+            const errors = errorData.detail.map((err: any) => 
+              `${err.loc?.join('.')} - ${err.msg}`
+            ).join('; ')
+            errorMessage = `参数校验失败: ${errors}`
+          } else if (typeof errorData.detail === 'string') {
+            errorMessage = errorData.detail
+          }
+        } else {
+          errorMessage = errorData.detail || errorData.message || JSON.stringify(errorData)
+        }
       } catch (e) {
         errorMessage = `HTTP ${response.status}: ${response.statusText}`
       }

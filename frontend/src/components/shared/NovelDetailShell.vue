@@ -237,7 +237,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useNovelStore } from '@/stores/novel'
 import { NovelAPI } from '@/api/novel'
 import { AdminAPI } from '@/api/admin'
-import type { NovelProject, NovelSectionResponse, NovelSectionType } from '@/api/novel'
+import type { NovelProject, NovelSectionResponse, NovelSectionType, AllSectionType } from '@/api/novel'
 import { formatDateTime } from '@/utils/date'
 import BlueprintEditModal from '@/components/BlueprintEditModal.vue'
 import OverviewSection from '@/components/novel-detail/OverviewSection.vue'
@@ -253,7 +253,7 @@ interface Props {
   isAdmin?: boolean
 }
 
-type SectionKey = NovelSectionType
+type SectionKey = AllSectionType
 
 const props = withDefaults(defineProps<Props>(), {
   isAdmin: false
@@ -412,6 +412,13 @@ const handleResize = () => {
 
 const loadSection = async (section: SectionKey, force = false) => {
   if (!projectId) return
+  
+  // 分析型Section使用独立的API，不需要在这里加载
+  const analysisSections: SectionKey[] = ['emotion_curve', 'foreshadowing']
+  if (analysisSections.includes(section)) {
+    return
+  }
+  
   if (!force && sectionData[section]) {
     return
   }
@@ -420,8 +427,8 @@ const loadSection = async (section: SectionKey, force = false) => {
   sectionError[section] = null
   try {
     const response: NovelSectionResponse = props.isAdmin
-      ? await AdminAPI.getNovelSection(projectId, section)
-      : await NovelAPI.getSection(projectId, section)
+      ? await AdminAPI.getNovelSection(projectId, section as NovelSectionType)
+      : await NovelAPI.getSection(projectId, section as NovelSectionType)
     sectionData[section] = response.data
     if (section === 'overview') {
       overviewMeta.title = response.data?.title || overviewMeta.title
