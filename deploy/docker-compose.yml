@@ -14,6 +14,7 @@ services:
       LOGGING_LEVEL: ${LOGGING_LEVEL:-INFO}
 
       DB_PROVIDER: ${DB_PROVIDER:-sqlite}
+      SQLITE_DB_PATH: ${SQLITE_DB_PATH:-/app/storage/arboris.db}
 
       MYSQL_HOST: ${MYSQL_HOST:-db}
       MYSQL_PORT: ${MYSQL_PORT:-3306}
