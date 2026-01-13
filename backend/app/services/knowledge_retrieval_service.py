@@ -41,6 +41,7 @@ class FilteredContext:
     world_fragments: List[str]  # 世界碎片
     narrative_techniques: List[str]  # 叙事技法
     warnings: List[str]  # 冲突警告
+    stats: Optional[Dict[str, Any]] = None
 
 
 # ==================== 提示词模板 ====================
@@ -212,7 +213,8 @@ class KnowledgeRetrievalService:
         retrieved = await self._retrieve_from_vector_store(
             project_id=project_id,
             queries=queries,
-            top_k=top_k
+            top_k=top_k,
+            user_id=user_id,
         )
         
         # 4. 获取前文摘要
@@ -229,7 +231,25 @@ class KnowledgeRetrievalService:
             pov_character=pov_character,
             user_id=user_id
         )
-        
+
+        filtered_counts = {
+            "plot_fuel": len(filtered.plot_fuel),
+            "character_info": len(filtered.character_info),
+            "world_fragments": len(filtered.world_fragments),
+            "narrative_techniques": len(filtered.narrative_techniques),
+            "warnings": len(filtered.warnings),
+        }
+        hit_chapters = sorted({r.chapter_number for r in retrieved if r.chapter_number})
+        filtered.stats = {
+            "query_count": len(queries),
+            "retrieved_count": len(retrieved),
+            "top_k": top_k,
+            "hit_chapters": hit_chapters,
+            "filtered_counts": filtered_counts,
+            "total_filtered": sum(filtered_counts.values()),
+            "pov_character": pov_character,
+        }
+
         return filtered
     
     async def get_chapter_context(
@@ -411,7 +431,8 @@ class KnowledgeRetrievalService:
         self,
         project_id: str,
         queries: List[str],
-        top_k: int
+        top_k: int,
+        user_id: int,
     ) -> List[RetrievedKnowledge]:
         """从向量库检索"""
         if not self.vector_store_service or not queries:
@@ -420,11 +441,30 @@ class KnowledgeRetrievalService:
         retrieved = []
         for query in queries:
             try:
-                results = await self.vector_store_service.search(
-                    project_id=project_id,
-                    query=query,
-                    top_k=top_k
-                )
+                if hasattr(self.vector_store_service, "search"):
+                    results = await self.vector_store_service.search(
+                        project_id=project_id,
+                        query=query,
+                        top_k=top_k
+                    )
+                else:
+                    embedding = await self.llm_service.get_embedding(query, user_id=user_id)
+                    if not embedding:
+                        continue
+                    chunks = await self.vector_store_service.query_chunks(
+                        project_id=project_id,
+                        embedding=embedding,
+                        top_k=top_k,
+                    )
+                    results = [
+                        {
+                            "content": chunk.content,
+                            "source": "chapter",
+                            "chapter_number": chunk.chapter_number,
+                            "score": 1.0 - chunk.score,
+                        }
+                        for chunk in chunks
+                    ]
                 for r in results:
                     retrieved.append(RetrievedKnowledge(
                         content=r.get("content", ""),

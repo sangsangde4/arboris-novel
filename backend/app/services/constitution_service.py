@@ -91,7 +91,7 @@ class ConstitutionService:
         # 解析结果
         try:
             # 尝试提取 JSON
-            content = response.get("content", "")
+            content = response or ""
             json_start = content.find("{")
             json_end = content.rfind("}") + 1
             if json_start >= 0 and json_end > json_start:

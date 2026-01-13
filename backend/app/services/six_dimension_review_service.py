@@ -85,7 +85,7 @@ class SixDimensionReviewService:
         
         # 解析结果
         try:
-            content = response.get("content", "")
+            content = response or ""
             json_start = content.find("{")
             json_end = content.rfind("}") + 1
             if json_start >= 0 and json_end > json_start:
