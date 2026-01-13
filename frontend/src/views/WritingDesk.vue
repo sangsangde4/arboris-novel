@@ -504,7 +504,7 @@ const saveChapterChanges = async (updatedChapter: ChapterOutline) => {
 const evaluateChapter = async () => {
   if (selectedChapterNumber.value !== null) {
     // 保存原始状态，用于失败时恢复
-    let previousStatus: string | undefined
+    let previousStatus: "not_generated" | "generating" | "evaluating" | "selecting" | "failed" | "evaluation_failed" | "waiting_for_confirm" | "successful" | undefined
     
     try {
       // 在本地更新章节状态为evaluating以立即反映在UI上
