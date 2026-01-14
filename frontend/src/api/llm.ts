@@ -60,3 +60,21 @@ export const deleteLLMConfig = async (): Promise<void> => {
     throw new Error('Failed to delete LLM config');
   }
 };
+
+export interface ModelListRequest {
+  llm_provider_url?: string;
+  llm_provider_api_key: string;
+}
+
+export const getAvailableModels = async (request: ModelListRequest): Promise<string[]> => {
+  const response = await fetch(`${LLM_BASE}/models`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(request),
+  });
+  if (!response.ok) {
+    // 获取模型列表失败时返回空数组，不影响主流程
+    return [];
+  }
+  return response.json();
+};
